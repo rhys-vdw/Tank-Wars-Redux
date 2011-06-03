@@ -1,4 +1,3 @@
-
 public class Tank implements Drawable {
   private float angle;
   private int power;
@@ -57,3 +56,4 @@ public class Tank implements Drawable {
     }
   }
 }
+

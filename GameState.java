@@ -1,4 +1,3 @@
-
 /** Abstract class for holding a state of the game (ie menu, weapon selection,
  *  battle).
  */

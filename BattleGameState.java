@@ -7,6 +7,7 @@ public class BattleGameState extends GameState {
   private int mapWidth, mapHeight;
   private boolean[][] dirt;
   private int dirtColor;
+  private DirtGenerator dirtGenerator;
 
   private final static int BACKGROUND_COLOR = 0x382428;
   private final static int DEFAULT_DIRT_COLOR = 0xFF00A800;
@@ -23,6 +24,7 @@ public class BattleGameState extends GameState {
     this.mapHeight = mapHeight;
     this.dirt = new boolean[mapWidth][mapHeight];
     this.dirtColor = DEFAULT_DIRT_COLOR;
+    this.dirtGenerator = new FlatDirtGenerator();
     /* this.battleState = INITIAL_BATTLE_STATE */
   }
   
@@ -64,11 +66,6 @@ public class BattleGameState extends GameState {
   }
   
   private void generateDirt() {
-    /* fill the lower half of the map */
-    for (int y = 0; y < mapHeight; y++) {
-      for (int x = 0; x < mapWidth; x++) {
-        dirt[x][y] = y < mapHeight / 2;
-      }
-    }
+    dirtGenerator.generate(dirt, mapWidth, mapHeight);
   }
 }

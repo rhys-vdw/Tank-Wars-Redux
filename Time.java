@@ -1,11 +1,11 @@
 
 class Time {
-  long previousTime;
-  int deltaTime;
+  private long previousTime;
+  private int deltaTime;
 
   public Time() {
-    previousTime = System.currentTimeMillis();
-    deltaTime = 0;
+    this.previousTime = System.currentTimeMillis();
+    this.deltaTime = 0;
   }
 
   /** Updates deltaTime. This should be called once per game tick.
@@ -17,9 +17,10 @@ class Time {
   }
 
   /** Returns the duration of the last frame in ms.
-   *  @return deltaTime in ms
+   *  @return deltaTime in s
    */
-  public int getDeltaTime() {
-    return this.deltaTime;
+  public float getDeltaTime() {
+    return this.deltaTime / 1000;
   }
 }
+

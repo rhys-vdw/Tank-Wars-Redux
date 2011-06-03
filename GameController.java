@@ -22,13 +22,15 @@ public class GameController extends PApplet {
     this.height = height - this.getBounds().y;
     this.time = new Time();
     this.gameState = initializeGameStates();
+    this.gameState.enter();
   }
 
   /** Create the state objects that control the game.
    *  @return the initial state
    */
   public GameState initializeGameStates() {
-    GameState battleGameState = new BattleGameState(this, this.width, this.height);
+    GameState battleGameState = new BattleGameState(this, this.width,
+        this.height);
     return battleGameState;
   }
 
@@ -52,25 +54,21 @@ public class GameController extends PApplet {
     }
 
     /* run game logic */
-    this.gameState.update();
-    /* update screen */
+    this.gameState.update(time.getDeltaTime());
+    /* update pixels */
     this.gameState.render();
   }
 
-  /** Returns the elapsed time between this frame and the last.
-   *  @return frame length in ms
-   */
-  public int getDeltaTime() {
-    return this.time.getDeltaTime();
-  }
-
-  /** Sets pixel color at specified coordinates
+  /** Sets pixel color at specified coordinates. Use this function rather than
+   *  the built in processing functions, as it converts game co-ordinates (where
+   *  the origin (0, 0) is the lower left corner of the screen) to processing
+   *  screen co-ords, where the origin is in the top left corner.
    *  @param x      the x coordinate of the pixel
    *  @param y      the y coordinate of the pixel
-   *  @param color  new color for pixel hexadecimal RGB values
+   *  @param color  new color for pixel hexadecimal ARGB values
    */
   public void setPixel(int x, int y, int color) {
-    this.pixels[y * this.width + x] = color;
+    this.pixels[(this.height - y - 1) * this.width + x] = color;
   }
 }
 

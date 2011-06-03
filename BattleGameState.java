@@ -1,13 +1,15 @@
 
+/** This is the main game state. This handles the creation of tanks, handling
+ *  of turns, firing of shots and updating scores.
+ */
 public class BattleGameState extends GameState {
   private GameController game;
   private int mapWidth, mapHeight;
   private boolean[][] dirt;
-  private int skyColor;
   private int dirtColor;
 
-  private final static int DEFAULT_SKY_COLOR = 0x0000FF00;
-  private final static int DEFAULT_DIRT_COLOR = 0x00FF0000;
+  private final static int BACKGROUND_COLOR = 0x382428;
+  private final static int DEFAULT_DIRT_COLOR = 0xFF00A800;
 
   /* TODO:
   private enum BattleState { PlayerTurn, ResolvingShot, CollapsingDirt }
@@ -17,8 +19,9 @@ public class BattleGameState extends GameState {
 
   public BattleGameState(GameController game, int mapWidth, int mapHeight) {
     this.game = game;
+    this.mapWidth = mapWidth;
+    this.mapHeight = mapHeight;
     this.dirt = new boolean[mapWidth][mapHeight];
-    this.skyColor = DEFAULT_SKY_COLOR;
     this.dirtColor = DEFAULT_DIRT_COLOR;
     /* this.battleState = INITIAL_BATTLE_STATE */
   }
@@ -34,23 +37,20 @@ public class BattleGameState extends GameState {
   public GameState transition() { return null; }
 
   @Override
-  public void update() {
+  public void update(float deltaTime) {
     /* check battle state and act accordingly */
   }
 
   @Override
   public void render() {
-    game.ellipse(50, 50, 100, 200);
-    //game.fill(100);
-
+    /* set background color */
+    game.background(BACKGROUND_COLOR);
     /* render dirt */
     game.loadPixels();
     for (int y = 0; y < mapHeight; y++) {
       for (int x = 0; x < mapWidth; x++) {
-        game.pixels[x * mapWidth + y] = game.color(255, 0, 0, 255);
-        //game.setPixel(x, y, game.color(1, 0, 0));
-        //game.setPixel(x, y, (this.dirt[x][y] ? game.color(0, 0, 1) : game.color(0, 1, 0)));
-        //this.dirtColor : this.skyColor));
+        if (this.dirt[x][y])
+          game.setPixel(x, y, this.dirtColor);
       }
     }
     game.updatePixels();

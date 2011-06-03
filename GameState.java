@@ -15,8 +15,9 @@ abstract class GameState {
 
   /** This method should contain all the logic code for each tick. It is
    *  guaranteed to be executed before render().
+   *  @param deltaTime the time elapsed in the previous frame, in s
    */ 
-  abstract public void update();
+  abstract public void update(float deltaTime);
   
   /** This method should contain all the code that updates the screen. It is
    *  called after update().

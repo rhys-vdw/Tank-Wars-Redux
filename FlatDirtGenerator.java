@@ -4,7 +4,7 @@ class FlatDirtGenerator implements DirtGenerator {
     /* fill the lower half of the map */
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-          dirt[x][y] = y < height / 2;
+          dirt[x][y] = y > height / 2;
       }
     }
   }

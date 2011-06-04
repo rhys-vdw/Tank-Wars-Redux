@@ -20,7 +20,7 @@ class Time {
    *  @return deltaTime in s
    */
   public float getDeltaTime() {
-    return this.deltaTime / 1000;
+    return (float) this.deltaTime / 1000.0f;
   }
 }
 

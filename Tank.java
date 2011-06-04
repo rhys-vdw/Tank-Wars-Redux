@@ -1,61 +1,92 @@
+import processing.core.*;
+
 public class Tank implements Drawable {
-  private float angle;
-  private int power;
-  private int x, y;
-  private int men;
+  private int power, angle;
+  private float x, y;
+  private float men;
   private Profile controller;
   private int color;
+  private PImage image;
+  private PApplet game;
   
-  /* angle that turret is moving to */
-  private int targetAngle;
-  /* direction that turret is rotating */
-  private boolean clockwise;
-
   private final static int INITIAL_POWER = 100;
   private final static int INITIAL_MEN = 100;
-  private final static int INITIAL_ANGLE = 45.0f;
-  private final static float MAX_ANGLE = 90.0f;
-  private final static float MIN_ANGLE = -90.0f;
-  private final static float TURRET_RANGE = MAX_ANGLE - MIN_ANGLE;
-  private final static float TURRET_SPEED = 5.0f;
+  private final static int INITIAL_ANGLE = 45;
+  private final static int MAX_ANGLE = 90;
+  private final static int MIN_ANGLE = -90;
+  private final static int TURRET_RANGE = MAX_ANGLE - MIN_ANGLE;
+  public final static int TANK_WIDTH = 9;
+  public final static int TANK_HEIGHT = 5;
+  public final static int CENTER_POINT_X = 4;
+  public final static int CENTER_POINT_Y = 4;
+  //private final static float TURRET_SPEED = 5.0f;
   public final static boolean CLOCKWISE = true;
   public final static boolean ANTICLOCKWISE = false;
 
-  private bool[][] tankPixels;
-
-  private loadTankPixels() {
-    final bool X = true;
-    final bool _ = false;
-    this.tankPixels = {
-        {_,_,_,X,X,X,_,_,_},
-        {_,X,X,X,X,X,X,X,_},
-        {_,X,X,X,X,X,X,X,_},
-        {X,X,X,_,X,_,X,X,X},
-        {X,X,X,X,X,X,X,X,X}
-     };
-  }
-
-  public Tank(Profile controller, int x, int y, int color) {
+  /** Constructs a new tank.
+   *  @param game       the main PApplet to which the graphics will be drawn 
+   *  @param controller the player or AI controlling this tank in its turn
+   *  @param x          the tank's initial x co-ordinate 
+   *  @param y          the tank's initial y co-ordinate 
+   *  @param color      the tank's color, in hex ARGB
+   */
+  public Tank(PApplet game, Profile controller, int x, int y, int color) {
+    this.game = game;
     this.controller = controller;
     this.x = x;
     this.y = y;
     this.color = color;
-    this.angle = this.targetAngle = INITIAL_ANGLE;
+    this.angle = INITIAL_ANGLE;
     this.power = INITIAL_POWER;
     this.men = INITIAL_MEN;
-    this.clockwise = CLOCKWISE;
+    this.image = createImage();
   }
 
-  /** Set a desired angle for the turret, and a rotation direction. This
-   *  initiates the turret to move in the specified direction at a constant
-   *  speed until it reaches the desired angle.
-   *  @param angle the desired angle for the turret [-90, 90]
+  /** Create the sprite that represents the tank chassy.
+   *  @return a sprite representing the tank
+   */
+  private PImage createImage() {
+    PImage image;
+    final boolean X = true;
+    final boolean _ = false;
+    boolean[] tankPixels = {
+       _,_,_,X,X,X,_,_,_,
+       _,X,X,X,X,X,X,X,_,
+       _,X,X,X,X,X,X,X,_,
+       X,X,X,_,X,_,X,X,X,
+       X,X,X,X,X,X,X,X,X
+    };
+    image = this.game.createImage(TANK_WIDTH, TANK_HEIGHT, PConstants.ARGB);
+    image.loadPixels();
+    for (int i = 0; i < tankPixels.length; i++) {
+      image.pixels[i] = tankPixels[i] ? color : 0x00000000;
+    }
+    image.updatePixels();
+    return image;
+  }
+
+  /** Adjust turret angle by one degree.
    *  @param clockwise the direction the turret should rotate
    */
-  public void setAngle(int angle, boolean clockwise) {
-    /* TODO: Throw exception if angle is out of range. */
-    this.targetAngle = angle;
-    this.clockwise = clockwise;
+  public void changeAngle(boolean clockwise) {
+    if (clockwise) {
+      this.angle++;
+      if (this.angle > MAX_ANGLE) {
+        this.angle -= TURRET_RANGE;
+      }
+    } else {
+      this.angle--;
+      if (this.angle < MIN_ANGLE) {
+        this.angle += TURRET_RANGE;
+      }
+    }
+  }
+
+  /** Returns angle of turret in degrees.
+   *  @return angle of turret between MIN_ANGLE (left) and MAX_ANGLE (right)
+   */
+  public int getAngle() {
+    return this.angle;
   }
 
   /** Specify the cannon strength.
@@ -65,33 +96,50 @@ public class Tank implements Drawable {
     this.power = power;
   }
 
-  /** Updates rotation of turret. To be called every tick.
-   *  @param deltaTime the duration of the previous frame, in seconds
-   */
-  public void update(float deltaTime) {
-    if (this.angle != this.targetAngle) {
-      boolean leftOfTarget = angle < targetAngle;
-      /* adjust angle towards target in specified rotation direction */
-      angle += (this.clockwise ? 1 : -1) * TURRET_SPEED * deltaTime;
-      /* if the turret has passed its target, set it to the target angle */
-      /* TODO: this will not work */
-      if ((leftOfTarget && this.clockwise) && (angle > targetAngle)
-          || ((!leftOfTarget && !this.clockwise) && (angle < targetAngle)) {
-        angle = targetAngle;
-      }
-      /* if angle is below horizontal, flip */
-      if (angle < MIN_ANGLE) {
-        angle += TURRET_RANGE;
-      } else if (angle > MAX_ANGLE) {
-        angle -= TURRET_RANGE;
-      }
-    }
-  }
-  
+  /** Draw the tank at its position. */
   @Override
-  public void draw(PApplet game) {
-    game.loadPixels();
+  public void draw() {
+    /* draw chassy */
+    this.game.image(this.image, this.x - CENTER_POINT_X,
+        this.y - CENTER_POINT_Y);
+    /* TODO: draw cannon */
   }
 
+  /** Returns the horizontal position of the tank
+   *  @return the X co-ordinate of the tank
+   */
+  public float getX() {
+    return this.x;
+  }
+
+  /** Returns the vertical position of the tank
+   *  @return the Y co-ordinate of the tank
+   */
+  public float getY() {
+    return this.y;
+  }
+
+  /** Move the tank in the level
+   *  @param x the horizontal distance of the move
+   *  @param y the vertical distance of the move
+   */
+  public void move(float x, float y) {
+    this.x += x;
+    this.y += y;
+  }
+
+  /** Sets the vertical position of the tank
+   *  @param y the new Y co-ordinate of the tank
+   */
+  public void setY(float y) {
+    this.y = y;
+  }
+
+  /** Take damage.
+   *  @param damage the number of men who die
+   */
+  public void damage(float damage) {
+    this.men -= damage;
+  }
 }
 

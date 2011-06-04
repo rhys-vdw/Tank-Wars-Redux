@@ -10,7 +10,8 @@ public class GameController extends PApplet {
   private Time time;
   private GameState gameState;
 
-  private final static String RENDER_MODE = PConstants.P2D; //JAVA2D;
+  private final static String RENDER_MODE = PConstants.P2D;
+  private final static int FRAME_RATE = 60;
 
   /** Create a new GameController component.
    *  @param width          width of the parent window
@@ -36,6 +37,7 @@ public class GameController extends PApplet {
 
   @Override
   public void setup() {
+    this.frameRate(FRAME_RATE);
     this.size(this.width, this.height, RENDER_MODE);
     this.background(0);
   }
@@ -60,9 +62,8 @@ public class GameController extends PApplet {
   }
 
   /** Sets pixel color at specified coordinates. Use this function rather than
-   *  the built in processing functions, as it converts game co-ordinates (where
-   *  the origin (0, 0) is the lower left corner of the screen) to processing
-   *  screen co-ords, where the origin is in the top left corner.
+   *  accessig PApplet.pixels[] directly or using set(), as it has bounds
+   *  checking.
    *  
    *  @param x      the x coordinate of the pixel
    *  @param y      the y coordinate of the pixel
@@ -73,22 +74,10 @@ public class GameController extends PApplet {
    */
   public void setPixel(int x, int y, int color) throws SetPixelOutOfRangeException {
     if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      this.pixels[(this.height - y - 1) * this.width + x] = color;
+      this.pixels[y * this.width + x] = color;
     } else {
       throw new SetPixelOutOfRangeException(x, y);
     }
-  }
-
-  /** Draws a line to the screen. This overrides the Processing line() to use the
-   *  game co-ordinates.
-   *  @param x1 the x-coordinate of the start point
-   *  @param y1 the y-coordinate of the start point
-   *  @param x2 the x-coordinate of the end point
-   *  @param y2 the y-coordinate of the end point
-   */
-  @Override
-  public void line(float x1, float y1, float x2, float y2) {
-    super.line(x1, this.height - y1 - 1, x2, this.height - y2 - 1);
   }
 }
 

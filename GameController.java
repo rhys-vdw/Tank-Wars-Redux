@@ -63,12 +63,32 @@ public class GameController extends PApplet {
    *  the built in processing functions, as it converts game co-ordinates (where
    *  the origin (0, 0) is the lower left corner of the screen) to processing
    *  screen co-ords, where the origin is in the top left corner.
+   *  
    *  @param x      the x coordinate of the pixel
    *  @param y      the y coordinate of the pixel
    *  @param color  new color for pixel hexadecimal ARGB values
+   *
+   *  @exception SetPixelOutOfRangeException tried to set a pixel outside of the
+   *                drawing area
    */
-  public void setPixel(int x, int y, int color) {
-    this.pixels[(this.height - y - 1) * this.width + x] = color;
+  public void setPixel(int x, int y, int color) throws SetPixelOutOfRangeException {
+    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+      this.pixels[(this.height - y - 1) * this.width + x] = color;
+    } else {
+      throw new SetPixelOutOfRangeException(x, y);
+    }
+  }
+
+  /** Draws a line to the screen. This overrides the Processing line() to use the
+   *  game co-ordinates.
+   *  @param x1 the x-coordinate of the start point
+   *  @param y1 the y-coordinate of the start point
+   *  @param x2 the x-coordinate of the end point
+   *  @param y2 the y-coordinate of the end point
+   */
+  @Override
+  public void line(float x1, float y1, float x2, float y2) {
+    super.line(x1, this.height - y1 - 1, x2, this.height - y2 - 1);
   }
 }
 

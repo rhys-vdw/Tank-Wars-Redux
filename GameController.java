@@ -29,9 +29,9 @@ public class GameController extends PApplet {
   /** Create the state objects that control the game.
    *  @return the initial state
    */
-  public GameState initializeGameStates() {
+  private GameState initializeGameStates() {
     GameState battleGameState = new BattleGameState(this, this.width,
-        this.height);
+        this.height, null);
     return battleGameState;
   }
 

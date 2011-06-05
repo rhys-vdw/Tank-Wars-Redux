@@ -1,3 +1,4 @@
+import java.lang.Math;
 import processing.core.*;
 
 public class Tank implements Drawable {
@@ -8,13 +9,15 @@ public class Tank implements Drawable {
   private int color;
   private PImage image;
   private PApplet game;
+  private boolean alive;
   
   private final static int INITIAL_POWER = 100;
   private final static int INITIAL_MEN = 100;
-  private final static int INITIAL_ANGLE = 45;
-  private final static int MAX_ANGLE = 90;
-  private final static int MIN_ANGLE = -90;
+  private final static int INITIAL_ANGLE = 135;
+  private final static int MAX_ANGLE = 270;
+  private final static int MIN_ANGLE = 90;
   private final static int TURRET_RANGE = MAX_ANGLE - MIN_ANGLE;
+  private final static float TURRET_LENGTH = 7.0f;
   public final static int TANK_WIDTH = 9;
   public final static int TANK_HEIGHT = 5;
   public final static int CENTER_POINT_X = 4;
@@ -40,6 +43,7 @@ public class Tank implements Drawable {
     this.power = INITIAL_POWER;
     this.men = INITIAL_MEN;
     this.image = createImage();
+    this.alive = true;
   }
 
   /** Create the sprite that represents the tank chassy.
@@ -102,7 +106,11 @@ public class Tank implements Drawable {
     /* draw chassy */
     this.game.image(this.image, this.x - CENTER_POINT_X,
         this.y - CENTER_POINT_Y);
-    /* TODO: draw cannon */
+    /* draw cannon */
+    this.game.stroke(this.color);
+    this.game.line(this.x, this.y,
+        this.x + (float) Math.sin(Math.toRadians(this.angle)) * TURRET_LENGTH,
+        this.y + (float) Math.cos(Math.toRadians(this.angle)) * TURRET_LENGTH);
   }
 
   /** Returns the horizontal position of the tank
@@ -133,6 +141,25 @@ public class Tank implements Drawable {
    */
   public void setY(float y) {
     this.y = y;
+  }
+
+  /** Returns the number of men remaining in tank
+   *  @return tank's number of men/health
+   */
+  public int getMen() {
+    return Math.max((int) Math.ceil(this.men), 0);
+  }
+
+  /** Returns whether the tank is alive or not
+   *  @return true if the tank has a least one man
+   */
+  public boolean isAlive() {
+    return this.alive;
+  }
+
+  /** Set tank to dead */
+  public void kill() {
+    this.alive = false;
   }
 
   /** Take damage.

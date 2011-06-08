@@ -1,10 +1,12 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /** This is the main game state. This handles the creation of tanks, handling
  *  of turns, firing of shots and updating scores.
  */
-public class BattleGameState extends GameState {
+public class BattleGameState implements GameState {
   private GameController game;
   private int mapWidth, mapHeight;
   private boolean[][] dirt;
@@ -34,8 +36,9 @@ public class BattleGameState extends GameState {
   private final static float FALL_SPEED = 700.0f;
   private final static int PLAYERS = 4;
 
-  private interface BattleState {
-    BattleState update(float deltaTime);
+  private abstract class BattleState extends KeyAdapter {
+    abstract public BattleState update(float deltaTime);
+    public void render() { /* empty */ };
   }
   private BattleState battleState;
 
@@ -51,6 +54,8 @@ public class BattleGameState extends GameState {
     this.tanks = new ArrayList<Tank>();
   }
   
+  /* GAME STATE METHODS */
+
   @Override
   public void enter() {
     /* TODO: set width and height from GameOptions */
@@ -58,157 +63,34 @@ public class BattleGameState extends GameState {
     /* load tanks */
     loadTanks();
     this.turnIterator = tanks.iterator();
-    this.currentTank = turnIterator.next();
+    this.currentTank = null;
     this.battleState = new LowerTanksState();
     this.gameEnded = false;
   }
 
   @Override
   public GameState transition() {
-    if (gameEnded) {
-      return this.gameEndedState;
-    }
-    return null;
+    return gameEnded ? this.gameEndedState : null;
   }
 
-  private class LowerTanksState implements BattleState {
+  private class LowerTanksState extends BattleState {
     private Tank tank;
     private Iterator<Tank> tankIterator;
 
     public LowerTanksState() {
       this.tankIterator = tanks.iterator();
-      this.tank = nextLivingTank(tankIterator);
+      this.tank = this.tankIterator.next();
     }
 
     @Override
     public BattleState update(float deltaTime) {
       if (dropTank(tank, NO_DAMAGE, deltaTime) == FINISHED) {
-        this.tank = nextLivingTank(tankIterator);
-        if (this.tank == null) {
+        if (this.tankIterator.hasNext())
+          this.tank = tankIterator.next();
+        else {
           return new PlayerTurnState();
         }
       }
-      return this;
-    }
-  }
-
-  private class PlayerTurnState implements BattleState {
-    private Tank tank;
-
-    public PlayerTurnState() {
-      assert countLivingTanks() > 1
-          : countLivingTanks() + " tank(s) alive for player turn";
-
-      this.tank = nextLivingTank(tanks.iterator());
-    }
-
-    @Override
-    public BattleState update(float deltaTime) {
-      /* no idea what happens here... keyboard input must be somehow passed to
-         tank... either by logging keydown or by creating a new keydown
-         method */
-      return this;
-      /* or return new ResolvingTurnState(); */
-    }
-  }
-
-  private class ResolvingTurnState implements BattleState {
-    //private WeaponFire weaponFire;
-
-    public ResolvingTurnState(/*WeaponFire weaponFire*/) {
-      //this.weaponFire = weaponFire;
-    }
-    
-    @Override
-    public BattleState update(float deltaTime) {
-      //if (this.weaponFire.update() == FINISHED) {
-        //return new CrumbleDirtState(this.weaponFire.getHitInfo());
-      //} else {
-        return this;
-      //}
-    }
-  }
-
-  private class CrumbleDirtState implements BattleState {
-    //private HitInfo hitInfo;
-    //public CrumbleDirtState(HitInfo hitInfo) {
-      //this.hitInfo = hitInfo;
-      //this.dirtFallen = false;
-    //}
-    @Override
-    public BattleState update(float deltaTime) {
-      /*
-      if (crumbleSomeDirt() == FINISHED) {
-        return new DropTanksState());
-      }
-      this.dirtFallen = true; */
-      return this;
-    }
-  }
-
-  private class DropTanksState implements BattleState {
-    private Tank tank;
-    private Iterator<Tank> tankIterator;
-
-    public DropTanksState() {
-      this.tankIterator = tanks.iterator();
-      this.tank = nextLivingTank(tankIterator);
-    }
-
-    @Override
-    public BattleState update(float deltaTime) {
-      /* if there are no tanks to drop, end game */
-      if (countLivingTanks() == 0)
-        return new EndGameState();
-
-      /* drop current tank */
-      if (dropTank(tank, DAMAGE, deltaTime) == FINISHED) {
-        this.tank = nextLivingTank(tankIterator);
-        /* if there are no more tanks to drop, destroy dead tanks */
-        if (this.tank == null) {
-          return new DestroyDeadState();
-        }
-      }
-      return this;
-    }
-  }
-
-  /* Finds a single dead tank and destroys it */
-  private class DestroyDeadState implements BattleState {
-    //private Death death;
-
-    public DestroyDeadState() {
-      //this.death = null;
-      for (Tank t : tanks) {
-        if (t.isAlive() && t.getMen() == 0) {
-          //this.death = Death.spawnRandom(t);
-          t.kill();
-          break;
-        }
-      }
-    }
-
-    @Override
-    public BattleState update(float deltaTime) {
-      //if (this.death == null) {
-        /* continue game if there are at least two players */
-        //if (countLivingTanks() <= 1) {
-          //return new PlayerTurnState();
-        //} 
-        //return new EndGameState();
-      //}
-      //if (death.update(deltaTime) == FINISHED) {
-        //death.getHitInfo();
-        //return new CrumbleState(hitInfo);
-      //}
-      return this;
-    }
-  }
-
-  private class EndGameState implements BattleState {
-    @Override
-    public BattleState update(float deltaTime) {
-      gameEnded = true;
       return this;
     }
   }
@@ -241,6 +123,9 @@ public class BattleGameState extends GameState {
     for (Tank t : this.tanks) {
       t.draw();
     }
+
+    /* render state info */
+    this.battleState.render();
   }
 
   @Override
@@ -250,6 +135,178 @@ public class BattleGameState extends GameState {
     /* update player stats */
   }
   
+  /* KEY LISTENER METHODS */
+
+  @Override
+  public void keyPressed(KeyEvent e) {
+    this.battleState.keyPressed(e);
+  }
+
+  @Override
+  public void keyReleased(KeyEvent e) {
+    this.battleState.keyReleased(e);
+  }
+  
+  @Override
+  public void keyTyped(KeyEvent e) {
+    this.battleState.keyTyped(e);
+  }
+
+  /* BATTLE STATES */
+
+  private class PlayerTurnState extends BattleState {
+    private TankController controller;
+
+    public PlayerTurnState() {
+      incrementTurn();
+      this.controller = currentTank.getController();
+    }
+
+    @Override
+    public BattleState update(float deltaTime) {
+      WeaponFire weaponFire = this.controller.update(deltaTime);
+      if (weaponFire != null) {
+        return new ResolvingTurnState(weaponFire);
+      }
+      return this;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+      this.controller.keyPressed(e);
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+      this.controller.keyReleased(e);
+    }
+  }
+
+  private class ResolvingTurnState extends BattleState {
+    private WeaponFire weaponFire;
+
+    public ResolvingTurnState(WeaponFire weaponFire) {
+      System.out.println("Entering ResolvingTurnState");
+      this.weaponFire = weaponFire;
+    }
+    
+    @Override
+    public BattleState update(float deltaTime) {
+      HitInfo hitInfo = this.weaponFire.update(BattleGameState.this, deltaTime);
+      if (hitInfo != null) {
+        return new CrumbleDirtState(hitInfo);
+      } else {
+        return this;
+      }
+    }
+
+    @Override
+    public void render() {
+      this.weaponFire.draw(game);
+    }
+  }
+
+  private class CrumbleDirtState extends BattleState {
+    private HitInfo hitInfo;
+    //private boolean dirtFallen;
+
+    public CrumbleDirtState(HitInfo hitInfo) {
+      this.hitInfo = hitInfo;
+      //this.dirtFallen = false;
+    }
+
+    @Override
+    public BattleState update(float deltaTime) {
+      /*
+      if (crumbleSomeDirt() == FINISHED) {
+        return new DropTanksState());
+      }
+      this.dirtFallen = true;
+      return this;
+      */
+      return new DropTanksState();
+    }
+  }
+
+  private class DropTanksState extends BattleState {
+    private Tank tank;
+    private Iterator<Tank> tankIterator;
+
+    public DropTanksState() {
+      this.tankIterator = tanks.iterator();
+      this.tank = tankIterator.next();
+    }
+
+    @Override
+    public BattleState update(float deltaTime) {
+      /* if there are no tanks to drop, end game */
+      if (countLivingTanks() == 0)
+        return new EndGameState();
+
+      /* drop current tank */
+      if (dropTank(tank, DAMAGE, deltaTime) == FINISHED) {
+        if (tankIterator.hasNext()) {
+          do {
+            this.tank = tankIterator.next();
+          } while (this.tank.isAlive() && tankIterator.hasNext());
+        }
+        /* if there are no more tanks to drop, destroy dead tanks */
+        if (!tankIterator.hasNext()) {
+          return new DestroyDeadState();
+        }
+      }
+      return this;
+    }
+  }
+
+  /* Finds a single dead tank and destroys it */
+  private class DestroyDeadState extends BattleState {
+    //private Death death;
+
+    public DestroyDeadState() {
+      //this.death = null;
+      for (Tank t : tanks) {
+        if (t.isAlive() && t.getMen() == 0) {
+          //this.death = Death.spawnRandom(t);
+          t.kill();
+          break;
+        }
+      }
+    }
+
+    @Override
+    public BattleState update(float deltaTime) {
+      //if (this.death == null) {
+        /* continue game if there are at least two players */
+        //if (countLivingTanks() <= 1) {
+          //return new PlayerTurnState();
+        //} 
+        //return new EndGameState();
+      //}
+      //if (death.update(deltaTime) == FINISHED) {
+        //death.getHitInfo();
+        //return new CrumbleState(hitInfo);
+      //}
+      //return this;
+      return new PlayerTurnState();
+    }
+  }
+
+  private class EndGameState extends BattleState {
+    @Override
+    public BattleState update(float deltaTime) {
+      gameEnded = true;
+      return this;
+    }
+  }
+
+  /* MISCELLANY */
+
+  /** Check if there is dirt at specified x, y co-ordinates */
+  public boolean checkDirt(int x, int y) {
+    return this.dirt[x][y];
+  }
+
   /** Initialize the dirt for the level, using specified DirtGenerator */
   private void generateDirt() {
     dirtGenerator.generate(dirt, mapWidth, mapHeight);
@@ -267,6 +324,8 @@ public class BattleGameState extends GameState {
   }
 
   /** Drop a tank until it can go no further down.
+   *  TODO: This should probably be hidden within the tank class... Or even a
+   *        more general physics class from whic tank can inherit.
    *  @param tank      the tank to be dropped
    *  @param damage    true (DAMAGE) if falling damage to be dealt, or false
    *                   (NO_DAMAGE) otherwise
@@ -295,18 +354,24 @@ public class BattleGameState extends GameState {
     return finished;
   }
 
-  /** Increment a Tank iterator to the next living tank.
+  /** Increment a Tank iterator to the next living tank. TODO: this comment is wrong
    *  @param tankIterator an iterator to a collection of Tank objects
    *  @return the Tank iterated to, or null if none exists
    */
-  private Tank nextLivingTank(Iterator<Tank> tankIterator) {
-    while (tankIterator.hasNext()) {
-      Tank tank = tankIterator.next();
-      if (tank.isAlive()) {
-        return tank;
+  private void incrementTurn() {
+    Tank tank = null;
+    do {
+      if (!this.turnIterator.hasNext()) {
+        this.turnIterator = this.tanks.iterator();
       }
-    }
-    return null;
+      tank = turnIterator.next(); 
+      /* completed a full loop without finding a match */
+      if (tank == this.currentTank) {
+        System.out.println("NO LIVING TANKS HOLY SHIT!");
+      }
+    } while (!tank.isAlive());
+
+    this.currentTank = tank;
   }
 
   private int countLivingTanks() {

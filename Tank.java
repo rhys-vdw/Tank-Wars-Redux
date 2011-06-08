@@ -4,12 +4,15 @@ import processing.core.*;
 public class Tank implements Drawable {
   private int power, angle;
   private float x, y;
+  private float turretX, turretY;
   private float men;
-  private Profile controller;
+  private Profile profile;
+  private TankController controller;
   private int color;
   private PImage image;
   private PApplet game;
   private boolean alive;
+  private Weapon weapon;
   
   private final static int INITIAL_POWER = 100;
   private final static int INITIAL_MEN = 100;
@@ -28,22 +31,25 @@ public class Tank implements Drawable {
 
   /** Constructs a new tank.
    *  @param game       the main PApplet to which the graphics will be drawn 
-   *  @param controller the player or AI controlling this tank in its turn
+   *  @param profile    the player or AI controlling this tank in its turn
    *  @param x          the tank's initial x co-ordinate 
    *  @param y          the tank's initial y co-ordinate 
    *  @param color      the tank's color, in hex ARGB
    */
-  public Tank(PApplet game, Profile controller, int x, int y, int color) {
+  public Tank(PApplet game, Profile profile, int x, int y, int color) {
     this.game = game;
-    this.controller = controller;
+    this.profile = profile;
+    this.controller = new TankController(this);
     this.x = x;
     this.y = y;
     this.color = color;
     this.angle = INITIAL_ANGLE;
+    updateTurretPosition();
     this.power = INITIAL_POWER;
     this.men = INITIAL_MEN;
     this.image = createImage();
     this.alive = true;
+    this.weapon = new Weapon(new LeadBall());
   }
 
   /** Create the sprite that represents the tank chassy.
@@ -53,7 +59,7 @@ public class Tank implements Drawable {
     PImage image;
     final boolean X = true;
     final boolean _ = false;
-    boolean[] tankPixels = {
+    final boolean[] tankPixels = {
        _,_,_,X,X,X,_,_,_,
        _,X,X,X,X,X,X,X,_,
        _,X,X,X,X,X,X,X,_,
@@ -74,16 +80,28 @@ public class Tank implements Drawable {
    */
   public void changeAngle(boolean clockwise) {
     if (clockwise) {
-      this.angle++;
-      if (this.angle > MAX_ANGLE) {
-        this.angle -= TURRET_RANGE;
-      }
-    } else {
       this.angle--;
       if (this.angle < MIN_ANGLE) {
         this.angle += TURRET_RANGE;
       }
+    } else {
+      this.angle++;
+      if (this.angle > MAX_ANGLE) {
+        this.angle -= TURRET_RANGE;
+      }
     }
+    updateTurretPosition();
+  }
+
+  /** Updates the position of the end of the tank's cannon */
+  private void updateTurretPosition() {
+    this.turretX = (float) Math.sin(Math.toRadians(this.angle)) * TURRET_LENGTH;
+    this.turretY = (float) Math.cos(Math.toRadians(this.angle)) * TURRET_LENGTH;
+  }
+
+  /** Fire current weapon */
+  public WeaponFire fire() {
+    return this.weapon.fire(this);
   }
 
   /** Returns angle of turret in degrees.
@@ -98,6 +116,11 @@ public class Tank implements Drawable {
    */
   public void setPower(int power) {
     this.power = power;
+    System.out.println("power: " + power);
+  }
+
+  public int getPower() {
+    return this.power;
   }
 
   /** Draw the tank at its position. */
@@ -106,11 +129,11 @@ public class Tank implements Drawable {
     /* draw chassy */
     this.game.image(this.image, this.x - CENTER_POINT_X,
         this.y - CENTER_POINT_Y);
+
     /* draw cannon */
     this.game.stroke(this.color);
-    this.game.line(this.x, this.y,
-        this.x + (float) Math.sin(Math.toRadians(this.angle)) * TURRET_LENGTH,
-        this.y + (float) Math.cos(Math.toRadians(this.angle)) * TURRET_LENGTH);
+    this.game.line(this.x, this.y, this.x + this.turretX,
+        this.y + this.turretY);
   }
 
   /** Returns the horizontal position of the tank
@@ -125,6 +148,20 @@ public class Tank implements Drawable {
    */
   public float getY() {
     return this.y;
+  }
+
+  /** Returns the horizontal screen position of the turret end
+   *  @return the X co-ordinate of the turret end
+   */
+  public float getTurretX() {
+    return this.x + this.turretX;
+  }
+
+  /** Returns the vertical screen position of the turret end
+   *  @return the Y co-ordinate of the turret end
+   */
+  public float getTurretY() {
+    return this.y + this.turretY;
   }
 
   /** Move the tank in the level
@@ -167,6 +204,10 @@ public class Tank implements Drawable {
    */
   public void damage(float damage) {
     this.men -= damage;
+  }
+
+  public TankController getController() {
+    return this.controller;
   }
 }
 

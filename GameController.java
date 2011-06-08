@@ -22,8 +22,7 @@ public class GameController extends PApplet {
     this.width = width;
     this.height = height - this.getBounds().y;
     this.time = new Time();
-    this.gameState = initializeGameStates();
-    this.gameState.enter();
+    enterState(initializeGameStates());
   }
 
   /** Create the state objects that control the game.
@@ -33,6 +32,16 @@ public class GameController extends PApplet {
     GameState battleGameState = new BattleGameState(this, this.width,
         this.height, null);
     return battleGameState;
+  }
+
+  private void enterState(GameState nextState) {
+    if (this.gameState != null) {
+      this.removeKeyListener(this.gameState);
+      this.gameState.exit();
+    }
+    this.gameState = nextState;
+    this.gameState.enter();
+    this.addKeyListener(this.gameState);
   }
 
   @Override
@@ -50,9 +59,7 @@ public class GameController extends PApplet {
     /* check if a state transition has occurred */
     GameState nextState = this.gameState.transition();
     if (nextState != null) {
-      this.gameState.exit();
-      this.gameState = nextState;
-      this.gameState.enter();
+      enterState(nextState);
     }
 
     /* run game logic */
